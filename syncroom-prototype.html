@@ -1,0 +1,436 @@
+<!doctype html>
+<html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>SyncRoom Prototype</title>
+<style>
+:root{--bg:#121212;--s1:#181818;--s2:#242424;--s3:#2e2e2e;--g:#1DB954;--p:#7B61FF;--lav:#C9BBFF;--tx:#fff;--mu:#a7a7a7;--grad:linear-gradient(135deg,#7B61FF,#1DB954)}
+*{box-sizing:border-box;margin:0;padding:0;-webkit-tap-highlight-color:transparent}
+body{background:#050505;font-family:"Circular Std","Plus Jakarta Sans",Inter,system-ui,sans-serif;color:var(--tx);display:flex;justify-content:center;align-items:center;min-height:100vh}
+button{font:inherit;color:inherit;background:none;border:0;cursor:pointer}
+.phone{width:390px;height:844px;background:var(--bg);border-radius:38px;position:relative;overflow:hidden;box-shadow:0 0 0 10px #1b1b1b,0 30px 80px #000}
+@media(max-width:440px){body{display:block}.phone{width:100vw;height:100vh;border-radius:0;box-shadow:none}}
+.status{height:40px;display:flex;justify-content:space-between;align-items:center;padding:0 26px;font-size:13px;font-weight:600;position:absolute;top:0;left:0;right:0;z-index:30;background:var(--bg)}
+.screen{position:absolute;inset:40px 0 0 0;display:none;flex-direction:column}
+.screen.on{display:flex;animation:fi .25s}
+@keyframes fi{from{opacity:0;transform:translateY(8px)}to{opacity:1}}
+.scroll{flex:1;overflow-y:auto;padding:0 16px 190px;scrollbar-width:none}.scroll::-webkit-scrollbar{display:none}
+.scroll.noNav{padding-bottom:90px}
+.top{display:flex;align-items:center;gap:12px;padding:8px 16px 12px}
+.top h1{font-size:22px;font-weight:800;flex:1}
+.ic{width:34px;height:34px;border-radius:50%;display:grid;place-items:center;font-size:18px}
+.me{background:var(--g);color:#06260f}
+.h2{font-size:21px;font-weight:800;margin:22px 0 12px;display:flex;justify-content:space-between;align-items:baseline}
+.h2 a,.link{font-size:13px;color:var(--mu);font-weight:600;cursor:pointer}
+.card{background:var(--s1);border-radius:16px;padding:14px}
+.btn{height:46px;border-radius:24px;padding:0 22px;font-weight:700;font-size:15px;display:inline-flex;align-items:center;gap:8px;justify-content:center}
+.bg{background:var(--g);color:#06260f}.bp{background:var(--p);color:#fff}.bl{background:var(--lav);color:#1a0f4d}.bd{background:var(--s2)}
+.sm{height:34px;padding:0 16px;font-size:13px}
+.av{width:36px;height:36px;border-radius:50%;display:grid;place-items:center;font-weight:800;font-size:13px;color:#fff;flex:none;position:relative}
+.av.l{width:52px;height:52px;font-size:17px}
+.dot{position:absolute;right:0;bottom:0;width:11px;height:11px;border-radius:50%;background:var(--g);border:2px solid var(--s1)}
+.chips{display:flex;gap:8px;overflow-x:auto;scrollbar-width:none;padding-bottom:4px}
+.chip{padding:9px 16px;border-radius:20px;background:var(--s2);font-size:13px;font-weight:600;white-space:nowrap}
+.chip.on{background:var(--p);color:#fff}
+.art{border-radius:10px;flex:none;display:grid;place-items:center;font-size:20px}
+.row{display:flex;align-items:center;gap:12px}.grow{flex:1;min-width:0}
+.t{font-weight:700;font-size:15px}.s{font-size:12.5px;color:var(--mu);margin-top:2px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.hs{display:flex;gap:12px;overflow-x:auto;scrollbar-width:none;margin:0 -16px;padding:0 16px}
+.badge{font-size:11px;font-weight:800;padding:3px 9px;border-radius:10px;background:rgba(123,97,255,.25);color:var(--lav)}
+.badge.g{background:rgba(29,185,84,.18);color:var(--g)}
+.live{display:inline-block;width:8px;height:8px;border-radius:50%;background:var(--p);margin-right:6px;animation:pl 1.4s infinite}
+@keyframes pl{50%{opacity:.3}}
+/* mini + nav */
+.mini{position:absolute;left:10px;right:10px;bottom:76px;background:var(--s2);border-radius:14px;padding:9px 12px;z-index:20;display:none;align-items:center;gap:12px}
+.mini .bar{position:absolute;left:12px;right:12px;bottom:3px;height:3px;background:#444;border-radius:2px}.mini .bar i{display:block;height:100%;width:40%;background:var(--lav);border-radius:2px}
+.nav{position:absolute;left:0;right:0;bottom:0;height:70px;background:linear-gradient(transparent,#121212 30%);display:none;justify-content:space-around;padding-top:8px;z-index:20}
+.nav button{display:flex;flex-direction:column;align-items:center;gap:3px;font-size:11px;font-weight:600;color:var(--mu);width:64px}
+.nav button.on{color:#fff}.nav button.on.sy{color:var(--lav)}
+svg{width:24px;height:24px;fill:none;stroke:currentColor;stroke-width:2;stroke-linecap:round;stroke-linejoin:round}
+/* hero */
+.hero{background:linear-gradient(135deg,#3a1fa8,#1a1340 60%,#1b1b1b);border-radius:22px;padding:20px;position:relative;overflow:hidden;margin-top:6px}
+.hero:after{content:"";position:absolute;right:-40px;top:20px;width:170px;height:170px;border-radius:50%;background:rgba(200,190,255,.35);filter:blur(2px)}
+.hero>*{position:relative;z-index:1}
+.hero h2{font-size:34px;font-weight:800;margin:10px 0 6px}
+.input{width:100%;background:var(--s2);border-radius:14px;padding:16px;font-size:17px;border:0;color:#fff;outline:0}
+.field{display:flex;justify-content:space-between;align-items:center;margin:20px 0 10px;font-weight:800}
+.field span{font-size:12px;color:var(--mu);font-weight:600}
+.seg{display:flex;background:var(--s1);border-radius:14px;padding:4px}.seg button{flex:1;padding:12px;border-radius:11px;font-weight:600;font-size:14px;color:var(--mu)}.seg button.on{background:var(--s3);color:#fff}
+.mood{display:grid;grid-template-columns:repeat(3,1fr);gap:8px}.mood button{padding:12px;border-radius:22px;background:var(--s2);font-weight:600;font-size:14px}.mood button.on{background:var(--p)}
+.inv{display:flex;gap:8px}.inv button{flex:1;background:var(--s1);border-radius:14px;padding:10px 4px;font-size:12px;position:relative;display:flex;flex-direction:column;align-items:center;gap:4px;border:2px solid transparent}
+.inv button.on{border-color:transparent;background:var(--s2)}.inv button.on:after{content:"✓";position:absolute;top:4px;right:6px;width:18px;height:18px;border-radius:50%;background:var(--g);color:#000;font-size:11px;display:grid;place-items:center;font-weight:900}
+.inv b{color:var(--g)}
+.codes{display:flex;gap:8px;justify-content:center;margin:14px 0}.codes input{width:46px;height:52px;border-radius:12px;background:#0b0b0b;border:2px solid transparent;color:#fff;text-align:center;font-size:22px;font-weight:800;outline:0;text-transform:uppercase}.codes input:focus{border-color:var(--p)}
+/* room */
+.rhead{display:flex;align-items:center;gap:8px;padding:6px 12px 10px}.rhead h1{flex:1;font-size:17px;font-weight:800;text-align:center}
+.rnav{position:absolute;left:12px;right:12px;bottom:14px;background:var(--s1);border-radius:20px;padding:8px;display:none;gap:6px;z-index:20;border:1px solid #2a2a2a}
+.rnav button{flex:1;padding:9px 0;border-radius:14px;font-size:11px;font-weight:700;color:var(--mu);display:flex;flex-direction:column;align-items:center;gap:3px;position:relative}
+.rnav button.on{background:rgba(123,97,255,.3);color:#fff}
+.rnav em{position:absolute;top:2px;right:14px;font-style:normal;background:var(--g);color:#000;font-size:10px;border-radius:8px;padding:0 5px;font-weight:800}
+.cover{aspect-ratio:1;border-radius:20px;background:radial-gradient(circle at 50% 70%,#6b6f9c,transparent 50%),linear-gradient(#2b2a4a,#40426b 55%,#1b2038);position:relative;overflow:hidden}
+.cover:after{content:"";position:absolute;left:0;right:0;bottom:0;height:35%;background:linear-gradient(transparent,rgba(10,12,30,.7))}
+.cover .tag{position:absolute;top:12px;left:12px;background:rgba(0,0,0,.5);backdrop-filter:blur(6px);padding:6px 12px;border-radius:16px;font-size:12px;font-weight:700;z-index:2}
+.wave{display:flex;align-items:center;gap:5px;height:48px;justify-content:center;margin:12px 0 4px}.wave i{width:4px;border-radius:2px;background:var(--g);animation:w 1s infinite ease-in-out}.wave i:nth-child(even){background:var(--lav)}
+.paused .wave i{animation-play-state:paused}
+@keyframes w{50%{transform:scaleY(.35)}}
+.prog{height:5px;background:#444;border-radius:3px;position:relative;margin:14px 0 6px}.prog i{display:block;height:100%;border-radius:3px;background:linear-gradient(90deg,var(--g),var(--lav))}
+.prog b{position:absolute;top:-4px;width:13px;height:13px;border-radius:50%;background:var(--lav);margin-left:-6px}
+.ctl{display:flex;justify-content:space-between;align-items:center;margin:10px 4px}
+.play{width:68px;height:68px;border-radius:50%;background:var(--g);color:#06260f;display:grid;place-items:center}.play svg{fill:#06260f;stroke:none;width:28px;height:28px}
+.q{display:flex;align-items:center;gap:12px;background:var(--s1);border-radius:14px;padding:10px 12px;margin-bottom:8px}
+.vote{display:flex;align-items:center;gap:6px;background:var(--s2);border-radius:20px;padding:8px 12px;font-weight:800}.vote.on{background:var(--g);color:#06260f}
+.msg{display:flex;gap:10px;margin-bottom:14px}.bub{background:var(--s2);padding:10px 14px;border-radius:6px 16px 16px 16px;font-size:14.5px;margin-top:3px;display:inline-block}
+.me-m{align-self:flex-end;text-align:right;margin-bottom:14px}.me-m .bub{background:#4e2fe0;border-radius:16px 6px 16px 16px}
+.sys{text-align:center;margin:8px 0 14px}.sys span{background:var(--s1);color:var(--g);padding:7px 14px;border-radius:16px;font-size:12.5px;font-weight:600}
+.chatbar{position:absolute;left:12px;right:12px;bottom:96px;z-index:15}
+.emo{display:flex;gap:8px;background:var(--s1);border-radius:30px;padding:8px 12px;align-items:center;margin-bottom:8px;overflow-x:auto;scrollbar-width:none}.emo button{width:40px;height:40px;border-radius:50%;background:var(--s2);font-size:20px;flex:none}
+.msgin{display:flex;gap:8px;background:var(--s1);border-radius:30px;padding:8px 8px 8px 16px;align-items:center}.msgin input{flex:1;background:none;border:0;color:#fff;font-size:15px;outline:0}
+.send{width:44px;height:44px;border-radius:50%;background:var(--p);display:grid;place-items:center;font-size:20px}
+.float{position:absolute;bottom:150px;font-size:30px;animation:fl 1.8s forwards;pointer-events:none;z-index:25}
+@keyframes fl{to{transform:translateY(-300px);opacity:0}}
+.meter{height:6px;background:#333;border-radius:3px;margin-top:8px}.meter i{display:block;height:100%;border-radius:3px;background:var(--lav)}
+.grid2{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+.tog{width:50px;height:28px;border-radius:14px;background:#444;position:relative;flex:none;transition:.2s}.tog:after{content:"";position:absolute;top:3px;left:3px;width:22px;height:22px;border-radius:50%;background:#fff;transition:.2s}.tog.on{background:var(--g)}.tog.on:after{left:25px}
+.toast{position:absolute;left:50%;top:60px;transform:translate(-50%,-20px);background:#fff;color:#000;font-weight:700;font-size:13px;padding:10px 18px;border-radius:20px;opacity:0;transition:.3s;z-index:50;white-space:nowrap;pointer-events:none}.toast.on{opacity:1;transform:translate(-50%,0)}
+.stat{background:var(--s1);border-radius:16px;padding:14px}.stat small{font-size:11px;color:var(--mu);font-weight:800;letter-spacing:.5px}.stat b{display:block;font-size:24px;margin:6px 0 2px}
+.mt{display:flex;gap:8px;overflow-x:auto;scrollbar-width:none}
+.guide{position:fixed;left:20px;top:20px;font-size:12px;color:#777;max-width:200px;line-height:1.5}@media(max-width:900px){.guide{display:none}}
+</style></head><body>
+<div class="guide"><b style="color:#aaa">SyncRoom prototype</b><br>Click through: tabs, Create Room, Join, Tune In, queue votes, chat, Mood DJ, End Session → Recap.</div>
+<div class="phone" id="phone">
+<div class="status"><span>9:41</span><span>▲ ◉ ▮</span></div>
+<div class="toast" id="toast"></div>
+
+<!-- HOME -->
+<section class="screen on" id="home">
+ <div class="top"><h1>Home</h1><span class="ic">🔔</span><span class="ic">🕘</span><span class="ic me">●</span></div>
+ <div class="scroll">
+  <div class="chips"><span class="chip on">All</span><span class="chip">Music</span><span class="chip">Podcasts</span><span class="chip">Audiobooks</span></div>
+  <div class="hero" id="hero">
+   <button class="ic" style="position:absolute;right:12px;top:12px;background:rgba(0,0,0,.4)" onclick="document.getElementById('hero').remove()">✕</button>
+   <div class="row"><span class="ic" style="background:rgba(255,255,255,.12);border-radius:12px">👥</span><span style="font-size:12px;font-weight:800;color:var(--lav);letter-spacing:1px">NEW EXPERIENCE</span></div>
+   <h2>SyncRoom</h2><div style="font-weight:700;font-size:17px">Listen together. Feel together.</div>
+   <p style="color:#cfc8ee;margin:8px 0 16px;font-size:14px;max-width:250px">Create a room or join friends for real-time synchronized music and chat.</p>
+   <div class="row"><button class="btn bg" onclick="go('create')">◉ Create Room</button><button class="btn bd" onclick="go('join')">Join Room</button></div>
+  </div>
+  <div class="h2"><span><span class="live"></span>Friends Live in Sync</span><a style="color:var(--lav)">3 Rooms Active</a></div>
+  <div class="hs">
+   <div class="card" style="min-width:300px"><div class="row"><div class="av l" style="background:#7B61FF">M</div><div class="grow"><div class="t">Maya's Vibez</div><div class="s" style="color:var(--lav)">Late Night R&amp;B</div></div><span class="badge">▮ 6</span></div><div class="row" style="margin-top:12px;justify-content:space-between"><div class="row" style="gap:0"><div class="av" style="background:#555;width:30px;height:30px">J</div><div class="av" style="background:#7B61FF;width:30px;height:30px;margin-left:-8px">L</div></div><button class="btn bl sm" onclick="go('room-player')">Tune In</button></div></div>
+   <div class="card" style="min-width:300px"><div class="row"><div class="av l" style="background:#1d6f4a">D</div><div class="grow"><div class="t">Dev's Study</div><div class="s" style="color:var(--g)">Lofi Beats &amp; Focus</div></div></div><div class="row" style="margin-top:12px;justify-content:space-between"><span class="s">K T +12</span><button class="btn bl sm" onclick="go('room-player')">Tune In</button></div></div>
+  </div>
+  <div class="h2">Made for You<a>See all</a></div>
+  <div class="hs">
+   <div style="min-width:170px"><div class="art" style="width:170px;height:170px;background:linear-gradient(#b87e9c,#5c3a6b)">Daily Mix 1</div><div class="s" style="margin-top:8px">SZA, Brent Faiyaz, Summer Walker</div></div>
+   <div style="min-width:170px"><div class="art" style="width:170px;height:170px;background:linear-gradient(#3e8f6f,#14352b)">Daily Mix 2</div><div class="s" style="margin-top:8px">Dominic Fike, Steve Lacy, Frank Ocean</div></div>
+   <div style="min-width:170px"><div class="art" style="width:170px;height:170px;background:linear-gradient(#5a76b5,#222c55)">Daily Mix 3</div><div class="s" style="margin-top:8px">Khruangbin, Beach House</div></div>
+  </div>
+  <div class="h2">Your Top Mixes<a>See all</a></div>
+  <div class="hs">
+   <div style="min-width:170px"><div class="art" style="width:170px;height:170px;background:linear-gradient(#27456f,#0f1a30)">R&amp;B Mix</div><div class="s" style="margin-top:8px">Snoh Aalegra, Daniel Caesar</div></div>
+   <div style="min-width:170px"><div class="art" style="width:170px;height:170px;background:linear-gradient(#777,#222)">2010s Chill</div><div class="s" style="margin-top:8px">The xx, Bon Iver, Vance Joy</div></div>
+   <div style="min-width:170px"><div class="art" style="width:170px;height:170px;background:linear-gradient(#a2503a,#3d1a14)">Indie Mix</div><div class="s" style="margin-top:8px">Phoebe Bridgers, Clairo</div></div>
+  </div>
+ </div>
+</section>
+
+<!-- SYNCROOM LANDING -->
+<section class="screen" id="sync">
+ <div class="top"><h1>SyncRoom</h1><span class="ic">🔔</span><span class="ic">🕘</span><span class="ic me">●</span></div>
+ <div class="scroll">
+  <div class="hero" style="margin-top:0;padding:16px"><h2 style="font-size:30px;margin:0">SyncRoom</h2><div class="s" style="font-size:14px">Listen together. Feel together.</div></div>
+  <div class="row" style="margin:14px 0"><button class="btn bp grow" onclick="go('create')">⊕ Create Room</button><button class="btn bd grow" onclick="go('join')">▦ Enter Code</button></div>
+  <div class="h2" style="font-size:17px;margin-top:8px"><span>👥 Friends in Rooms</span><span class="s" style="color:var(--g)">● 4 Online</span></div>
+  <div class="hs" style="gap:18px">
+   <div style="text-align:center" onclick="go('room-player')"><div class="av l" style="background:#b4426b;width:64px;height:64px;border:2px solid var(--lav)">S</div><div class="s" style="color:#fff;margin-top:6px">Sarah</div><div class="s" style="color:var(--lav)">Lo-Fi Chillout</div></div>
+   <div style="text-align:center" onclick="go('room-player')"><div class="av l" style="background:#1d6f4a;width:64px;height:64px;border:2px solid var(--g)">M</div><div class="s" style="color:#fff;margin-top:6px">Marcus</div><div class="s" style="color:var(--lav)">Late Night H…</div></div>
+   <div style="text-align:center" onclick="go('room-player')"><div class="av l" style="background:#6a4bd6;width:64px;height:64px;border:2px solid var(--lav)">M</div><div class="s" style="color:#fff;margin-top:6px">Maya &amp; Lia</div><div class="s" style="color:var(--lav)">R&amp;B Study</div></div>
+   <div style="text-align:center" onclick="go('room-player')"><div class="av l" style="background:#25607a;width:64px;height:64px;border:2px solid #444">E</div><div class="s" style="color:#fff;margin-top:6px">Elena</div><div class="s" style="color:var(--lav)">Tokyo Drift</div></div>
+  </div>
+  <div class="h2" style="font-size:17px"><span style="color:#fff">↗ Popular Public Rooms</span><a style="color:var(--lav)">Explore all</a></div>
+  <div class="card"><div class="art" style="width:100%;height:120px;background:linear-gradient(135deg,#2a0d57,#c0359b 70%,#ff8a5c);align-items:end;justify-items:start;padding:10px;font-weight:800;position:relative"><span class="badge" style="position:absolute;left:10px;top:10px;background:rgba(0,0,0,.5);color:#fff">▮ 142 listening</span>SYNTHWAVE NIGHTS</div><div class="t" style="font-size:17px;margin:10px 0 8px">Neon Drift // Midnight Session</div><div class="row"><div class="av" style="background:#555;width:30px;height:30px">K</div><span class="s grow">Hosted by Kaelen Vox</span><button class="btn bg sm" onclick="go('room-player')">▷ Join</button></div></div>
+  <div class="card" style="margin-top:10px"><div class="art" style="width:100%;height:120px;background:linear-gradient(135deg,#8a5a1c,#e7b04a 70%,#503010);align-items:end;justify-items:start;padding:10px;font-weight:800;position:relative"><span class="badge" style="position:absolute;left:10px;top:10px;background:rgba(0,0,0,.5);color:#fff">🎧 89 listening</span>THE GOLDEN HOUR</div><div class="t" style="font-size:17px;margin:10px 0 8px">Golden Hour Warmth &amp; Melodies</div><div class="row"><div class="av" style="background:#b4426b;width:30px;height:30px">C</div><span class="s grow">Hosted by Chloe Green</span><button class="btn bp sm" onclick="go('room-player')">▷ Join</button></div></div>
+  <div class="h2" style="font-size:17px">🕘 Recently Joined</div>
+  <div class="q"><div class="art" style="width:44px;height:44px;background:#1f2a52">🚗</div><div class="grow"><div class="t">Midnight Drive</div><div class="s">18 people still in sync • Ambient</div></div><button class="btn bd sm" onclick="go('room-player')">↻ Rejoin</button></div>
+  <div class="q"><div class="art" style="width:44px;height:44px;background:#40306b">🎧</div><div class="grow"><div class="t">Focus Beats</div><div class="s">34 people in room • Deep Ins…</div></div><button class="btn bd sm" onclick="go('room-player')">↻ Rejoin</button></div>
+  <div class="h2" style="font-size:17px"><span style="color:#fff">✦ Recommended For You</span><a style="color:var(--lav)">Based on your artists</a></div>
+  <div class="card"><div class="row"><div class="art" style="width:70px;height:70px;background:var(--grad)">♪</div><div class="grow"><span class="badge g">♡ 96% taste match</span><div class="t" style="font-size:17px;margin:4px 0">Neo-Soul &amp; Chill Grooves</div><div class="s">Playing: Leon Bridges, Cleo Sol…</div></div></div><div class="row" style="margin-top:12px;justify-content:space-between"><span class="s">+42 matched listeners</span><button class="btn bl sm" onclick="go('room-player')">Tune In</button></div></div>
+ </div>
+</section>
+
+<!-- CREATE ROOM -->
+<section class="screen" id="create">
+ <div class="top"><button class="ic" onclick="go('sync')">←</button><h1>Create Room</h1><span class="ic me">●</span></div>
+ <div class="scroll">
+  <div class="field" style="margin-top:6px"><div>Room Name <span class="badge" style="color:var(--lav)">REQUIRED</span></div><span id="cnt">15/40</span></div>
+  <input class="input" id="rname" value="Late Night Vibe" maxlength="40" oninput="cnt.textContent=this.value.length+'/40'">
+  <div class="field"><div>Room Artwork</div><span>Custom or Preset</span></div>
+  <div class="row" id="arts">
+   <button class="art" style="width:76px;height:76px;background:var(--s2);font-size:13px;flex-direction:column">📷<br>Custom</button>
+   <button class="art on" style="width:76px;height:76px;background:linear-gradient(#4a1fcf,#1a0a66);outline:3px solid var(--lav)">⠿</button>
+   <button class="art" style="width:76px;height:76px;background:linear-gradient(#0f7a3c,#08331a)">▮▮</button>
+   <button class="art" style="width:76px;height:76px;background:linear-gradient(#a99bff,#4b3a9f)">≋</button>
+  </div>
+  <div class="field"><div>Starting Mood</div><span style="color:var(--lav)">✦ Smart AI Sync</span></div>
+  <div class="mood" id="moods"><button class="on">🌙 Chill</button><button>🎉 Party</button><button>🎧 Focus</button><button>⚡ Hype</button><button>🌧️ Sad</button><button>☀️ Happy</button></div>
+  <div class="field"><div>Listening Privacy</div><span>🔒 Encrypted Audio</span></div>
+  <div class="seg" id="priv"><button class="on">🔒 Private (Invite only)</button><button>🌐 Public (Joinable)</button></div>
+  <p class="s" id="privtxt" style="white-space:normal;margin-top:10px;font-size:13.5px">ⓘ Only mutual friends with a shared invite link can stream along and queue songs.</p>
+  <div class="field"><div>Quick Invite <span class="badge g">Blend Match</span></div><span style="color:var(--lav)">🔗 Copy Link</span></div>
+  <div class="inv" id="invs">
+   <button class="on"><div class="av l" style="background:#25607a">A</div>Alex<b>96% Blend</b></button>
+   <button class="on"><div class="av l" style="background:#b4426b">Z</div>Zoe<b>89% Blend</b></button>
+   <button><div class="av l" style="background:#444">C</div>Carlos<b>84% Blend</b></button>
+   <button><div class="av l" style="background:#7a4b25">N</div>Nina<b>78% Blend</b></button>
+  </div>
+  <button class="btn bp" style="width:100%;height:54px;margin-top:22px;font-size:17px" onclick="startRoom()">Create Room &amp; Start Listening</button>
+  <p class="s" style="text-align:center;margin-top:10px;color:#ddd">High-fidelity lossless stream • Zero latency Spotify Sync</p>
+ </div>
+</section>
+
+<!-- JOIN -->
+<section class="screen" id="join">
+ <div class="top"><button class="ic" onclick="go('sync')">←</button><h1>Join a SyncRoom</h1><span class="ic me">●</span></div>
+ <div class="scroll">
+  <div class="card" style="margin-top:6px"><div class="row" style="justify-content:space-between"><b>▦ Enter 6-Digit Room Code</b><span class="badge" style="cursor:pointer" onclick="fillCode()">📋 Auto-paste</span></div>
+   <div class="codes" id="codes"><input maxlength="1"><input maxlength="1"><input maxlength="1"><input maxlength="1"><input maxlength="1"><input maxlength="1"></div>
+   <button class="btn bl" style="width:100%" onclick="joinCode()">Join with Code</button></div>
+  <div class="card row" style="margin-top:14px" onclick="toast('Camera opened — scanning…')"><div class="art" style="width:44px;height:44px;background:#0d2a17;color:var(--g)">▣</div><div class="grow"><div class="t">Scan Friend's Room QR Code</div><div class="s">Instant zero-latency camera sync</div></div>›</div>
+  <div class="h2" style="font-size:17px"><span>Pending Invitations <span class="badge">2 new</span></span><a>Clear all</a></div>
+  <div class="card row"><div class="av l" style="background:#7a4b25">L</div><div class="grow"><div class="t">Synthwave Roadtrip</div><div class="s">Leo invited you</div></div><button class="btn bg sm" onclick="go('room-player')">Join</button></div>
+  <div class="card row" style="margin-top:10px"><div class="av l" style="background:#444">M</div><div class="grow"><div class="t">Deep Work Beats</div><div class="s">Maya invited you</div></div><button class="btn bl sm" onclick="go('room-player')">Join</button></div>
+  <div class="h2" style="font-size:17px"><span>◎ Explore Live SyncRooms</span><a>142 Live Now</a></div>
+  <div class="chips" id="gen"><span class="chip on">Trending</span><span class="chip">Chill</span><span class="chip">Electronic</span><span class="chip">Hip-Hop</span><span class="chip">Rock</span></div>
+  <div class="card" style="margin-top:12px"><span class="badge">● LIVE SYNC</span><span class="badge g" style="float:right">👥 1.8k listening</span><div class="row" style="margin-top:10px"><div class="art" style="width:64px;height:64px;background:linear-gradient(#a02a2a,#2a0a0a)">▮</div><div class="grow"><div class="t" style="font-size:17px">Midnight City Lights</div><div class="s" style="color:var(--lav)">After Hours • The Weeknd</div><div class="s">Hosted by DJ Nova</div></div><button class="btn bl sm" onclick="go('room-player')">Join</button></div></div>
+  <div class="card row" style="margin-top:10px"><div class="art" style="width:56px;height:56px;background:linear-gradient(#2a6a4a,#0a2a1a)">☕</div><div class="grow"><div class="t">Late Night Coffee Club</div><div class="s">Nujabes • Feather</div><div class="s">Alex K. • 42 listeners</div></div><button class="btn bd sm" onclick="go('room-player')">Join</button></div>
+  <div class="h2" style="font-size:17px"><span>↻ Recently Active Rooms</span><a>View all</a></div>
+  <div class="q"><div class="art" style="width:44px;height:44px;background:var(--s3)">🎧</div><div class="grow"><div class="t">Tokyo City Pop Haven</div><div class="s">Last active 25m ago • 4 friends inside</div></div><button class="btn bd sm" onclick="go('room-player')">Rejoin</button></div>
+  <div class="q"><div class="art" style="width:44px;height:44px;background:var(--s3);color:var(--g)">▮▮</div><div class="grow"><div class="t">Indie Friday Throwdown</div><div class="s">Yesterday • Hosted by Sam</div></div><button class="btn bd sm" onclick="go('room-player')">Rejoin</button></div>
+ </div>
+</section>
+
+<!-- ROOM: PLAYER -->
+<section class="screen" id="room-player">
+ <div class="rhead"><button class="ic" onclick="go('sync')">←</button><h1>Active SyncRoom Session</h1><span class="ic" onclick="toast('Invite link copied')">⤴</span><span class="ic me">●</span></div>
+ <div class="scroll noNav" id="pl">
+  <div class="cover"><span class="tag">🏅 Alex's Queue</span><button class="ic" style="position:absolute;right:12px;bottom:12px;background:rgba(0,0,0,.5);z-index:2" onclick="heart(this)">♡</button></div>
+  <div class="wave" id="wave"></div>
+  <div class="s" style="text-align:center;color:#fff;margin-bottom:8px"><span style="color:var(--g)">●</span> Co-listening stereo sync active</div>
+  <div class="row"><div class="grow"><div style="font-size:28px;font-weight:800">Snooze</div><div class="s" style="font-size:15px">SZA • <span class="badge">Alex (Host) 👑</span></div></div><button class="ic" style="color:var(--g);font-size:26px" onclick="heart(this)">♡</button></div>
+  <div class="prog"><i id="pbar" style="width:50%"></i><b id="pdot" style="left:50%"></b></div>
+  <div class="row" style="justify-content:space-between"><span class="s" id="tcur">1:42</span><span class="s">3:21</span></div>
+  <div class="ctl"><button style="color:var(--lav);font-size:22px">⤨</button><button style="font-size:24px">⏮</button><button class="play" id="playbtn" onclick="togglePlay()"><svg viewBox="0 0 24 24"><rect x="5" y="4" width="5" height="16" rx="1"/><rect x="14" y="4" width="5" height="16" rx="1"/></svg></button><button style="font-size:24px">⏭</button><button style="color:var(--lav);font-size:22px">⟲</button></div>
+  <div class="card"><div class="row" style="justify-content:space-between"><b>👥 Listening in Sync (8)</b><span class="s" style="color:var(--g)">● All in tempo</span></div>
+   <div class="row" style="margin-top:12px;gap:10px"><div class="av l" style="background:#6a4bd6;outline:2px solid var(--p)">A</div><div class="av l" style="background:#b4426b">Z</div><div class="av l" style="background:#25607a">E</div><div class="av l" style="background:#7a4b25">C</div><div class="av l" style="background:#1d6f4a">M</div><div class="av l" style="background:var(--s3)" onclick="go('room-people')">+3</div></div></div>
+ </div>
+</section>
+
+<!-- ROOM: QUEUE -->
+<section class="screen" id="room-queue">
+ <div class="rhead"><button class="ic" onclick="go('room-player')">←</button><h1>Active SyncRoom Session</h1><span class="ic">⤴</span><span class="ic me">●</span></div>
+ <div class="scroll noNav">
+  <div class="card" style="background:linear-gradient(135deg,#2c2060,#1b1b1b)"><span class="badge" style="background:var(--p);color:#fff">NOW PLAYING • HOST'S PICK</span><div class="row" style="margin-top:12px"><div class="art" style="width:76px;height:76px;background:linear-gradient(#2b2a4a,#6a4bd6)">♪</div><div class="grow"><div class="t" style="font-size:22px">Snooze</div><div class="s" style="font-size:14px">SZA • SOS</div><span class="badge" style="margin-top:6px;display:inline-block">🎧 Synced with 6 listeners</span></div></div><div class="prog"><i style="width:55%"></i></div></div>
+  <div class="chips" style="margin:18px 0 12px"><span class="chip on" style="background:none;border-bottom:3px solid var(--g);border-radius:0">Top Voted</span><span class="chip" style="background:none">Recently Added</span><span class="chip" style="background:none">My Picks (2)</span></div>
+  <div id="qlist"></div>
+  <div class="card row" style="margin-top:10px"><div class="art" style="width:46px;height:46px;background:var(--p)">⇪</div><div class="s" style="white-space:normal;color:#fff;font-size:14px"><b style="font-size:15px">Tied votes play in order added</b><br>Songs with 15+ votes get instant priority bump!</div></div>
+  <button class="btn bg" style="width:100%;height:54px;margin-top:16px;font-size:17px" onclick="addSong()">＋ Add a Song to Queue</button>
+ </div>
+</section>
+
+<!-- ROOM: CHAT -->
+<section class="screen" id="room-chat">
+ <div class="rhead"><button class="ic" onclick="go('room-player')">←</button><h1>Active SyncRoom Session</h1><span class="ic">⤴</span><span class="ic me">●</span></div>
+ <div class="scroll noNav" id="chatscroll" style="padding-bottom:210px">
+  <div class="row" style="margin:8px 0 14px"><span style="color:var(--g)">●</span><b>8 in Sync</b><span class="s grow">• Late Night Vibe</span></div>
+  <div class="msg"><div class="av" style="background:#6a4bd6">A</div><div><b style="color:var(--lav)">Alex</b> <span class="badge" style="background:#4e2fe0;color:#fff">HOST</span> <span class="s">10:14 PM</span><br><span class="bub">That bridge transition is crazy 🔥</span></div></div>
+  <div class="msg"><div class="av" style="background:#b4426b">Z</div><div><b>Zoe</b> <span class="s">10:15 PM</span><br><span class="bub">Added Frank Ocean next, y'all better vote it up!<br><span style="display:inline-flex;gap:6px;margin-top:8px"><span class="badge" style="background:var(--s3);color:#fff;font-size:13px">🔥 3</span></span></span></div></div>
+  <div class="sys"><span>⬆ Carlos upvoted "Pink + White"</span></div>
+  <div class="msg"><div class="av" style="background:#25607a">E</div><div><b>Elena</b> <span class="s">10:15 PM</span><br><span class="bub">Voted!! 💜</span></div></div>
+  <div class="me-m"><span class="bub">This queue order is immaculate ✨</span><div class="s" style="margin-top:4px">10:16 PM • Delivered</div></div>
+  <div id="newmsgs"></div>
+ </div>
+ <div class="chatbar"><div class="emo"><b class="s" style="color:#fff;flex:none">Burst</b><button onclick="burst('🔥')">🔥</button><button onclick="burst('💜')">💜</button><button onclick="burst('⚡')">⚡</button><button onclick="burst('😭')">😭</button><button onclick="burst('🎶')">🎶</button><button onclick="burst('👏')">👏</button></div>
+ <div class="msgin"><span>🎙</span><input id="cin" placeholder="Say something to the room…" onkeydown="if(event.key==='Enter')sendMsg()"><button class="send" onclick="sendMsg()">↑</button></div></div>
+</section>
+
+<!-- ROOM: MOOD -->
+<section class="screen" id="room-mood">
+ <div class="rhead"><button class="ic" onclick="go('room-player')">←</button><h1>Active SyncRoom Session</h1><span class="ic">⤴</span><span class="ic me">●</span></div>
+ <div class="scroll noNav">
+  <div class="card"><b style="font-size:17px">Group Vibe Radar</b> <span style="color:var(--lav)">⚇</span><div class="s">Synthesized from 8 member listening histories</div>
+   <svg viewBox="0 0 200 180" style="width:100%;height:210px;margin:6px 0"><g stroke="#333" fill="none"><polygon points="100,20 170,90 100,160 30,90"/><polygon points="100,55 135,90 100,125 65,90"/></g><polygon id="radar" points="100,32 158,90 100,140 42,90" fill="rgba(29,185,84,.25)" stroke="#1DB954" style="transition:.5s"/><circle cx="100" cy="90" r="16" fill="#4e2fe0"/></svg>
+   <div class="grid2"><div class="stat" style="padding:10px"><div class="row" style="justify-content:space-between"><b style="font-size:13px">🌙 Chill Vibes</b><b id="v1" style="color:#fff;font-size:13px">84%</b></div><div class="meter"><i id="m1" style="width:84%"></i></div><small class="s">High Resonance</small></div>
+   <div class="stat" style="padding:10px"><div class="row" style="justify-content:space-between"><b style="font-size:13px;color:var(--g)">⚡ Energy Level</b><b id="v2" style="font-size:13px">68%</b></div><div class="meter"><i id="m2" style="width:68%;background:var(--g)"></i></div><small class="s">Moderate Pulse</small></div>
+   <div class="stat" style="padding:10px"><div class="row" style="justify-content:space-between"><b style="font-size:13px">☺ Valence</b><b style="font-size:13px">79%</b></div><div class="meter"><i style="width:79%"></i></div><small class="s">Warm &amp; Upbeat</small></div>
+   <div class="stat" style="padding:10px"><div class="row" style="justify-content:space-between"><b style="font-size:13px">🎧 Focus Mode</b><b style="font-size:13px">45%</b></div><div class="meter"><i style="width:45%;background:#777"></i></div><small class="s">Casual Social</small></div></div>
+   <div class="card" style="background:var(--s2);margin-top:12px;font-size:14px"><b style="color:var(--lav)">Vibe Consensus:</b> The room is actively leaning towards <b>Late Night Neo-Soul</b> and <b>Melodic R&amp;B</b>.</div></div>
+  <div class="field"><div>Steer the Vibe</div><span>Tap to guide recommendations</span></div>
+  <div class="chips" id="steer"><span class="chip on" style="background:var(--lav);color:#1a0f4d">🌙 Keep it Chill ✓</span><span class="chip">⚡ Shift to Hype</span><span class="chip">🎧 Deep Focus</span></div>
+  <div class="card row" style="margin-top:12px"><div class="art" style="width:46px;height:46px;background:#0d2a17;color:var(--g)">🤖</div><div class="grow"><div class="t">Auto-Pilot DJ Mode</div><div class="s" style="white-space:normal">Seamlessly queues next based on live reactions</div></div><div class="tog on" id="auto" onclick="this.classList.toggle('on');toast(this.classList.contains('on')?'Auto-Pilot on':'Auto-Pilot off')"></div></div>
+  <div class="field"><div>AI Transition Picks</div><span class="badge">Smart Crossfade</span></div>
+  <div class="card row" style="margin-bottom:8px"><div class="art" style="width:52px;height:52px;background:#2a1a4a">♪</div><div class="grow"><div class="t">Location <span class="badge">96% Match</span></div><div class="s">Khalid • American Teen</div><div class="s" style="color:var(--g)">Smooth 82 BPM transition</div></div><button class="btn bg sm" onclick="this.className='btn bd sm';this.textContent='✓ Queued';toast('Added to queue')">＋ Queue</button></div>
+  <div class="card row" style="margin-bottom:8px"><div class="art" style="width:52px;height:52px;background:#3a1a5a">♪</div><div class="grow"><div class="t">Get You <span class="badge">93% Match</span></div><div class="s">Daniel Caesar, Kali Uchis</div><div class="s">♡ Shared in 5 member libraries</div></div><button class="btn bd sm" onclick="this.textContent='✓ Queued';toast('Added to queue')">＋ Queue</button></div>
+  <div class="card row"><div class="art" style="width:52px;height:52px;background:#5a1a4a">♪</div><div class="grow"><div class="t">Redbone <span class="badge">89% Match</span></div><div class="s">Childish Gambino • Awaken…</div><div class="s" style="color:var(--g)">Energy bridge to next set</div></div><button class="btn bd sm" onclick="this.textContent='✓ Queued';toast('Added to queue')">＋ Queue</button></div>
+ </div>
+</section>
+
+<!-- ROOM: PEOPLE -->
+<section class="screen" id="room-people">
+ <div class="rhead"><button class="ic" onclick="go('room-player')">←</button><h1>Active SyncRoom Session</h1><span class="ic">⤴</span><span class="ic me">●</span></div>
+ <div class="scroll noNav">
+  <div class="card row" style="background:linear-gradient(135deg,#1b3a2a,#1b1b2e)"><div style="width:76px;height:76px;border-radius:50%;border:6px solid var(--g);display:grid;place-items:center;text-align:center;font-weight:800;font-size:20px;line-height:1">91%<br><small style="font-size:10px;color:var(--mu)">MATCH</small></div><div class="grow"><div class="t" style="font-size:17px">High Resonance Match ⚡</div><div class="s" style="color:var(--lav)">Neo-Soul • Chill R&amp;B • Bedroom Pop</div><div class="s">Algorithmic Blend Profile</div></div></div>
+  <div class="row" style="margin:12px 4px;justify-content:space-between;font-size:13px"><span><span style="color:var(--g)">●</span> 8/8 devices synced</span><span class="s" style="font-family:monospace">0ms jitter</span><span class="badge">LOSSLESS</span></div>
+  <div class="h2" style="font-size:18px">Listeners in Room <span class="badge">8</span></div>
+  <div class="q"><div class="av l" style="background:#6a4bd6">A<span class="dot">♛</span></div><div class="grow"><div class="t">Alex <span class="badge" style="background:#4a3a10;color:#f5c542">HOST</span></div><div class="s" style="color:var(--g)">● Streaming Master Audio</div></div><b style="color:var(--g);font-size:13px">98%</b></div>
+  <div class="q"><div class="av l" style="background:#b4426b">Z</div><div class="grow"><div class="t">Zoe <span class="badge" style="background:#4e2fe0;color:#fff">CO-DJ</span></div><div class="s">Added 3 songs to queue</div></div><b style="color:var(--g);font-size:13px">94%</b></div>
+  <div class="q"><div class="av l" style="background:#25607a">E<span class="dot"></span></div><div class="grow"><div class="t">Elena</div><div class="s">Vibing in tempo</div></div><b style="color:var(--g);font-size:13px">88%</b></div>
+  <div class="q"><div class="av l" style="background:#7a4b25">C<span class="dot"></span></div><div class="grow"><div class="t">Carlos</div><div class="s">👍 Upvoted 4 tracks</div></div><b style="color:var(--g);font-size:13px">91%</b></div>
+  <div class="q"><div class="av l" style="background:#1d6f4a">M<span class="dot" style="background:#e5a400"></span></div><div class="grow"><div class="t">Maya</div><div class="s">In background</div></div><b style="color:var(--g);font-size:13px">85%</b></div>
+  <div class="q"><div class="av l" style="background:#444">J<span class="dot"></span></div><div class="grow"><div class="t">Jordan</div><div class="s">Listening via AirPlay</div></div><b style="color:var(--g);font-size:13px">89%</b></div>
+  <div class="row card" style="margin-top:6px;justify-content:space-between"><span class="s" style="color:#fff">Room Reactions</span><span style="display:flex;gap:6px"><button class="ic" style="background:var(--s2)" onclick="toast('🔥 sent')">🔥</button><button class="ic" style="background:var(--s2)" onclick="toast('💜 sent')">💜</button><button class="ic" style="background:var(--s2)" onclick="toast('⚡ sent')">⚡</button></span></div>
+  <button class="btn bg" style="width:100%;height:54px;margin-top:14px;font-size:17px" onclick="toast('Invite link copied')">👤＋ Invite More Friends</button>
+  <button class="btn bd" style="width:100%;margin-top:10px;color:#ff7b7b" onclick="go('recap')">End Session</button>
+ </div>
+</section>
+
+<!-- RECAP -->
+<section class="screen" id="recap">
+ <div class="rhead"><button class="ic" onclick="go('room-people')">←</button><h1>Session Recap</h1><span class="ic me">●</span></div>
+ <div class="scroll noNav" style="padding-bottom:24px">
+  <div class="card" style="text-align:center;background:linear-gradient(135deg,#2c2060,#173d29)"><span class="badge">✦ SESSION COMPLETE</span><h2 style="font-size:28px;margin:12px 0 6px">Late Night Vibe Recap ✨</h2><div class="s" style="white-space:normal;color:#ddd">You and 7 friends listened together in sync for <b style="color:var(--lav)">1h 24m</b>.</div></div>
+  <div class="grid2" style="margin-top:12px"><div class="stat"><small>TRACKS</small><b>18 Tracks</b><span class="s" style="color:var(--g)">⚡ Non-stop playback</span></div><div class="stat"><small>ENERGY</small><b>142 Bursts</b><span class="s" style="color:#ff9a4a">🔥 Room on fire</span></div><div class="stat"><small>CHATTER</small><b>64 Notes</b><span class="s">3 Voice snippets</span></div><div class="stat"><small>PRECISION</small><b>99.8%</b><span class="s" style="color:var(--g)">Sync locked ±4ms</span></div></div>
+  <div class="card" style="margin-top:12px"><span class="badge g">MOST LOVED TRACK IN ROOM</span><div class="row" style="margin-top:10px"><div class="art" style="width:64px;height:64px;background:linear-gradient(#5a4a6a,#1a1a2a)">▶</div><div class="grow"><div class="t" style="font-size:17px">Pink + White</div><div class="s">Frank Ocean • Blonde</div><div class="s" style="color:var(--lav)">Queued by Zoe • Round 2</div></div></div><div class="row" style="justify-content:space-between;margin-top:10px;font-size:12.5px;color:var(--g);font-weight:700"><span>👍 14 Upvotes</span><span>🔥 38 Fire Bursts</span><span>🔖 6 Saved</span></div></div>
+  <div class="card" style="margin-top:12px"><div class="row" style="justify-content:space-between"><b>▮ Energy Timeline</b><span class="badge">Peak: 92% Hype</span></div>
+   <svg viewBox="0 0 300 100" style="width:100%;height:110px;margin-top:6px"><defs><linearGradient id="lg" x1="0" x2="1"><stop offset="0" stop-color="#7B61FF"/><stop offset="1" stop-color="#1DB954"/></linearGradient></defs><path d="M5 78 C60 78 90 20 150 20 S250 60 295 82" fill="none" stroke="url(#lg)" stroke-width="3"/><circle cx="150" cy="20" r="6" fill="#4e2fe0" stroke="#fff" stroke-width="2"/></svg>
+   <div class="row" style="justify-content:space-between" ><span class="s">Started Chill 🌙<br>70% • 9:45 PM</span><span class="s" style="text-align:center">Peak Hype ⚡<br>92% • 10:45 PM</span><span class="s" style="text-align:right">Wind Down 🌙<br>68% • 11:09 PM</span></div></div>
+  <div class="card row" style="margin-top:12px"><div class="art" style="width:46px;height:46px;background:var(--p)">🎉</div><div class="grow"><span class="badge">SYNC HIGHLIGHT • 10:32 PM</span><div class="t" style="margin-top:4px">The Drop Reaction Wave</div><div class="s">All 8 friends simultaneously…</div></div><button class="ic" onclick="heart(this)">♡</button></div>
+  <button class="btn bg" style="width:100%;height:52px;margin-top:16px" onclick="toast('Playlist saved to Your Library ✓')">≡ Save Session as Spotify Playlist</button>
+  <button class="btn bp" style="width:100%;height:52px;margin-top:10px" onclick="toast('Summary card ready to share')">⤴ Share Summary Card</button>
+  <button class="link" style="display:block;margin:16px auto 0;color:var(--mu)" onclick="go('home')">Back to Spotify Home</button>
+ </div>
+</section>
+
+<!-- SEARCH -->
+<section class="screen" id="search">
+ <div class="top"><h1>Search</h1><span class="ic">🔔</span><span class="ic">🕘</span><span class="ic me">●</span></div>
+ <div class="scroll">
+  <input class="input" style="margin-bottom:12px" placeholder="🔍  What do you want to listen to?">
+  <div class="chips"><span class="chip">Top</span><span class="chip on">● SyncRooms <span class="badge" style="background:#4e2fe0;color:#fff">LIVE</span></span><span class="chip">Artists</span><span class="chip">Playlists</span></div>
+  <div class="h2"><span style="font-size:20px"><span class="live"></span>Live SyncRooms Happening Now</span><a>See all ›</a></div>
+  <div class="hs">
+   <div class="card" style="min-width:330px"><span class="badge">🎧 214 listening</span><span class="s" style="float:right">City Pop</span><div class="art" style="width:100%;height:150px;margin:10px 0;background:linear-gradient(135deg,#0f6a7a,#b0309a 60%,#ff7a3c);font-weight:800;font-size:24px">TOKYO NIGHTS</div><div class="t" style="font-size:18px">Tokyo City Pop Lounge</div><div class="s">Host DJ Haruto</div><div class="row" style="justify-content:space-between;margin-top:10px"><span class="s">+211</span><button class="btn bl sm" onclick="go('room-player')">Join ◉</button></div></div>
+   <div class="card" style="min-width:330px"><span class="badge g">🎧 512 listening</span><div class="art" style="width:100%;height:150px;margin:10px 0;background:linear-gradient(135deg,#0a1a3a,#2a5a8a)">🌃</div><div class="t" style="font-size:18px">Late Night Drive</div><div class="s">Host CC</div><div class="row" style="justify-content:flex-end;margin-top:10px"><button class="btn bl sm" onclick="go('room-player')">Join ◉</button></div></div>
+  </div>
+  <div class="h2">Browse all<a>Explore categories</a></div>
+  <div class="art" style="height:100px;background:linear-gradient(90deg,#4e2fe0,#a99bff);justify-items:start;padding:16px;display:block;border-radius:16px" onclick="go('sync')"><span class="badge" style="background:rgba(255,255,255,.2);color:#fff">✦ FEATURED SOCIAL</span><div style="font-size:20px;font-weight:800;margin-top:6px">Live SyncRooms Hub</div><div style="font-size:13px">DJ together in real-time with friends.</div></div>
+  <div class="grid2" style="margin-top:10px">
+   <div class="art" style="height:100px;background:#1DB954;color:#06260f;align-items:start;justify-items:start;padding:12px;font-size:18px;font-weight:800">Music</div>
+   <div class="art" style="height:100px;background:#a99bff;color:#1a0f4d;align-items:start;justify-items:start;padding:12px;font-size:18px;font-weight:800">Podcasts</div>
+   <div class="art" style="height:100px;background:#4e2fe0;align-items:start;justify-items:start;padding:12px;font-size:18px;font-weight:800">Live Events</div>
+   <div class="art" style="height:100px;background:#2a2a2a;align-items:start;justify-items:start;padding:12px;font-size:18px;font-weight:800">Made For You</div>
+   <div class="art" style="height:100px;background:#2a2a2a;align-items:start;justify-items:start;padding:12px;font-size:18px;font-weight:800">New Releases</div>
+   <div class="art" style="height:100px;background:#2a2a2a;align-items:start;justify-items:start;padding:12px;font-size:18px;font-weight:800">Charts</div>
+  </div>
+ </div>
+</section>
+
+<!-- LIBRARY -->
+<section class="screen" id="library">
+ <div class="top"><h1>Your Library</h1><span class="ic">🔔</span><span class="ic">🕘</span><span class="ic me">●</span></div>
+ <div class="scroll">
+  <div class="chips"><span class="chip">Playlists</span><span class="chip on">◉ Saved SyncRooms</span><span class="chip">Artists</span><span class="chip">Albums</span></div>
+  <div class="h2" style="font-size:12px;color:var(--mu);letter-spacing:1px"><span>PINNED &amp; ACTIVE CIRCLES</span><a>3 Rooms</a></div>
+  <div class="q" onclick="go('room-player')"><div class="art" style="width:52px;height:52px;background:linear-gradient(#3a1fa8,#1a0a66)">▮</div><div class="grow"><div class="t">Late Night Vibe <span class="badge">Pinned</span></div><div class="s">Hosted by Alex • Last active 2h ago</div></div>▶</div>
+  <div class="q"><div class="art" style="width:52px;height:52px;background:linear-gradient(#a05a2a,#3a1a0a)">🎷</div><div class="grow"><div class="t">Friday Indie Discovery Club</div><div class="s">Weekly session • Every Friday 8 PM</div></div><span class="badge">24 members</span></div>
+  <div class="q"><div class="art" style="width:52px;height:52px;background:linear-gradient(#2a6a4a,#0a2a1a)">📚</div><div class="grow"><div class="t">Study Flow Lo-Fi Circle <span style="color:var(--g)">●</span></div><div class="s">Active now • 3 friends tuned in</div></div><button class="btn bg sm" onclick="go('room-player')">Join</button></div>
+  <div class="h2" style="font-size:12px;color:var(--mu);letter-spacing:1px"><span>SYNCROOM ARCHIVES · Past Session Playlists</span><a>See all</a></div>
+  <div class="grid2">
+   <div><div class="art" style="height:160px;background:linear-gradient(135deg,#4e2fe0,#1a1340);font-size:15px;font-weight:800">AURORA</div><div class="t" style="margin-top:6px">Aurora Session</div><div class="s">Playlist • 18 tracks</div></div>
+   <div><div class="art" style="height:160px;background:linear-gradient(135deg,#0f7a3c,#4e2fe0);font-size:15px;font-weight:800">Stillwater Nights</div><div class="t" style="margin-top:6px">Stillwater Nights</div><div class="s">Playlist • 22 tracks</div></div>
+   <div><div class="art" style="height:160px;background:linear-gradient(135deg,#ff8a5c,#6a2a7a)">🌅</div><div class="t" style="margin-top:6px">Coast Drive</div><div class="s">Playlist • 14 tracks</div></div>
+   <div><div class="art" style="height:160px;background:linear-gradient(135deg,#ff6a3c,#3a1a5a)">🌴</div><div class="t" style="margin-top:6px">Sunset Palms</div><div class="s">Playlist • 20 tracks</div></div>
+  </div>
+  <div class="card row" style="margin-top:16px;background:var(--s2)"><div class="art" style="width:40px;height:40px;background:var(--p)">👥</div><div class="grow"><div class="t">Host your own SyncRoom</div><div class="s">Invite friends and listen in sync</div></div><button class="btn bl sm" onclick="go('create')">Start Room</button></div>
+ </div>
+</section>
+
+<!-- STUDIO -->
+<section class="screen" id="studio">
+ <div class="top"><h1>Create</h1><span class="ic">🔔</span><span class="ic">🕘</span><span class="ic me">●</span></div>
+ <div class="scroll">
+  <div class="row" style="margin:6px 0 14px"><h1 style="font-size:24px">Create</h1><span class="badge">STUDIO</span></div>
+  <div class="card" style="border:2px solid var(--lav);background:#0b0b0b;padding:16px" onclick="go('create')"><div class="row"><div class="art" style="width:56px;height:56px;background:var(--p)">📡</div><div class="grow"><div class="t" style="font-size:19px">Start a SyncRoom <span class="badge" style="background:#4e2fe0;color:#fff">NEW</span></div><div class="s" style="color:var(--lav)">Real-time co-listening</div></div><span class="ic" style="background:#4e2fe0">→</span></div><p class="s" style="white-space:normal;color:#ddd;margin:12px 0;font-size:14px">Listen together in real time with friends, vote on queue, and explore AI DJ vibes in an interactive room.</p><div class="row" style="background:var(--s1);padding:8px 12px;border-radius:12px;justify-content:space-between;font-size:13px"><b>+18 Friends vibing now</b><span style="color:var(--g)">▮ Syncing 3 rooms</span></div></div>
+  <div class="q" style="margin-top:12px;padding:16px"><div class="art" style="width:46px;height:46px;background:var(--s3)">≡</div><div class="grow"><div class="t">Playlist</div><div class="s">Build a playlist with songs or episodes</div></div>›</div>
+  <div class="q" style="padding:16px"><div class="art" style="width:46px;height:46px;background:var(--s3)">◎</div><div class="grow"><div class="t">Blend <span class="badge">Match Taste</span></div><div class="s">Combine your music taste with a friend</div></div>›</div>
+  <div class="q" style="padding:16px"><div class="art" style="width:46px;height:46px;background:var(--s3)">👤＋</div><div class="grow"><div class="t">Collaborative Playlist</div><div class="s">Invite friends to add, reorder, and edit</div></div>›</div>
+  <div class="q" style="padding:16px"><div class="art" style="width:46px;height:46px;background:var(--s3)">🔊</div><div class="grow"><div class="t">Start a Group Session <span class="s">(Speaker)</span></div><div class="s">Listen on a shared speaker with friends</div></div>›</div>
+  <div class="card row" style="font-size:13.5px;color:#ddd"><span style="color:var(--lav)">✦</span> Pro tip: SyncRooms sync playback down to the millisecond across iOS and Web.</div>
+ </div>
+</section>
+
+<!-- mini + navs -->
+<div class="mini" id="mini" onclick="go('room-player')"><div class="art" style="width:44px;height:44px;background:var(--s3);color:var(--lav)">◎</div><div class="grow"><div class="t">Snooze</div><div class="s" style="color:var(--lav)">▮ SZA • SyncRoom Live</div></div><span style="font-size:20px">⌸</span><span style="color:var(--g);font-size:22px">♡</span><span style="font-size:30px">⏸</span><div class="bar"><i></i></div></div>
+<div class="nav" id="nav">
+ <button data-t="home"><svg viewBox="0 0 24 24"><path d="M3 11l9-8 9 8v10H3z"/></svg>Home</button>
+ <button data-t="sync" class="sy"><svg viewBox="0 0 24 24"><circle cx="9" cy="8" r="3.5"/><path d="M2 20c0-4 3-6 7-6s7 2 7 6"/><path d="M17 5a3.5 3.5 0 010 7M20 20c0-3-1.5-5-3-5.5"/></svg>SyncRoom</button>
+ <button data-t="search"><svg viewBox="0 0 24 24"><circle cx="10" cy="10" r="6.5"/><path d="M15 15l6 6"/></svg>Search</button>
+ <button data-t="library"><svg viewBox="0 0 24 24"><rect x="4" y="4" width="16" height="16" rx="2"/><path d="M10 16V8l5 1.5"/></svg>Your Library</button>
+ <button data-t="studio"><svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="9"/><path d="M12 8v8M8 12h8"/></svg>Create</button>
+</div>
+<div class="rnav" id="rnav">
+ <button data-r="room-player">▶<span>Player</span></button>
+ <button data-r="room-queue">☰<span>Queue</span><em id="qn">14</em></button>
+ <button data-r="room-chat">💬<span>Chat</span><em style="background:var(--p);color:#fff">3</em></button>
+ <button data-r="room-mood">✦<span>88% Energy</span></button>
+ <button data-r="room-people">👥<span>8 online</span></button>
+</div>
+</div>
+
+<script>
+const $=s=>document.querySelector(s),$$=s=>[...document.querySelectorAll(s)];
+const MAIN=['home','sync','search','library','studio'],ROOM=['room-player','room-queue','room-chat','room-mood','room-people'];
+let playing=true,sec=102,inRoom=false;
+function go(id){
+ $$('.screen').forEach(s=>s.classList.toggle('on',s.id===id));
+ const isMain=MAIN.includes(id),isRoom=ROOM.includes(id);
+ $('#nav').style.display=isMain?'flex':'none';
+ $('#mini').style.display=isMain&&id!=='home'||isMain&&inRoom?'flex':(isMain?'flex':'none');
+ $('#rnav').style.display=isRoom?'flex':'none';
+ if(isRoom)inRoom=true;
+ $$('#nav button').forEach(b=>b.classList.toggle('on',b.dataset.t===id||(id==='sync'&&b.dataset.t==='sync')));
+ $$('#rnav button').forEach(b=>b.classList.toggle('on',b.dataset.r===id));
+ document.querySelector('#'+id+' .scroll')?.scrollTo(0,0);
+}
+$$('#nav button').forEach(b=>b.onclick=()=>go(b.dataset.t));
+$$('#rnav button').forEach(b=>b.onclick=()=>go(b.dataset.r));
+function toast(t){const e=$('#toast');e.textContent=t;e.classList.add('on');clearTimeout(e._t);e._t=setTimeout(()=>e.classList.remove('on'),1800)}
+function heart(b){const on=b.textContent==='♡';b.textContent=on?'♥':'♡';if(on)b.style.color='var(--g)'}
+// wave
+const w=$('#wave');for(let i=0;i<30;i++){const e=document.createElement('i');e.style.height=(14+Math.random()*34)+'px';e.style.animationDelay=(-Math.random()).toFixed(2)+'s';e.style.animationDuration=(.7+Math.random()*.7)+'s';w.appendChild(e)}
+function fmt(s){return Math.floor(s/60)+':'+String(s%60).padStart(2,'0')}
+function togglePlay(){playing=!playing;$('#pl').classList.toggle('paused',!playing);$('#playbtn').innerHTML=playing?'<svg viewBox="0 0 24 24"><rect x="5" y="4" width="5" height="16" rx="1"/><rect x="14" y="4" width="5" height="16" rx="1"/></svg>':'<svg viewBox="0 0 24 24"><path d="M7 4l13 8-13 8z"/></svg>'}
+setInterval(()=>{if(!playing)return;sec=sec>=201?0:sec+1;const p=sec/201*100;$('#pbar').style.width=p+'%';$('#pdot').style.left=p+'%';$('#tcur').textContent=fmt(sec)},1000);
+// chip groups
+function single(sel,cls='on'){$$(sel).forEach(b=>b.onclick=()=>{$$(sel).forEach(x=>x.classList.remove(cls));b.classList.add(cls)})}
+single('#moods button');single('#arts .art:not(:first-child)');single('#gen .chip');
+$$('#arts .art:not(:first-child)').forEach(b=>b.onclick=()=>{$$('#arts .art').forEach(x=>x.style.outline='none');b.style.outline='3px solid var(--lav)'});
+$$('#priv button').forEach((b,i)=>b.onclick=()=>{$$('#priv button').forEach(x=>x.classList.remove('on'));b.classList.add('on');$('#privtxt').textContent=i?'ⓘ Anyone on Spotify can discover and join this room from Search and Explore.':'ⓘ Only mutual friends with a shared invite link can stream along and queue songs.'});
+$$('#invs button').forEach(b=>b.onclick=()=>b.classList.toggle('on'));
+$$('#steer .chip').forEach(c=>c.onclick=()=>{$$('#steer .chip').forEach(x=>{x.style.background='';x.style.color='';x.textContent=x.textContent.replace(' ✓','')});c.style.background='var(--lav)';c.style.color='#1a0f4d';c.textContent+=' ✓';
+ const hype=c.textContent.includes('Hype'),foc=c.textContent.includes('Focus');
+ $('#radar').setAttribute('points',hype?'100,25 165,90 100,125 38,90':foc?'100,45 140,90 100,150 50,90':'100,32 158,90 100,140 42,90');
+ $('#v1').textContent=hype?'52%':foc?'61%':'84%';$('#m1').style.width=$('#v1').textContent;$('#v2').textContent=hype?'91%':foc?'38%':'68%';$('#m2').style.width=$('#v2').textContent;toast('Steering room: '+c.textContent.replace(' ✓','').trim())});
+function startRoom(){const n=$('#rname').value.trim();if(!n){toast('Room name is required');return}toast('"'+n+'" is live');go('room-player')}
+// join
+const ci=$$('#codes input');ci.forEach((i,k)=>{i.oninput=()=>{if(i.value&&ci[k+1])ci[k+1].focus()};i.onkeydown=e=>{if(e.key==='Backspace'&&!i.value&&ci[k-1])ci[k-1].focus()}});
+function fillCode(){'SYNC42'.split('').forEach((c,k)=>ci[k].value=c);toast('Code pasted')}
+function joinCode(){if(ci.some(i=>!i.value)){toast('Enter all 6 characters');return}go('room-player')}
+// queue
+let songs=[['Pink + White','Frank Ocean','Zoe',14,'#5a4a6a'],['Kill Bill','SZA','Carlos',11,'#1a3a5a'],['Die For You','The Weeknd','Alex',9,'#5a1a4a'],['Telepatía','Kali Uchis','Nina',6,'#6a4a1a']];
+const extra=[['Location','Khalid','You',1,'#2a1a4a'],['Get You','Daniel Caesar','You',1,'#3a1a5a'],['Redbone','Childish Gambino','You',1,'#5a1a2a']];
+function renderQ(){songs.sort((a,b)=>b[3]-a[3]);$('#qlist').innerHTML=songs.map((s,i)=>`<div class="q"><span class="s">⠿</span><div class="art" style="width:52px;height:52px;background:${s[4]};font-weight:800">${i+1}</div><div class="grow"><div class="t">${s[0]}</div><div class="s">${s[1]}</div><div class="s">by <span style="color:var(--lav)">${s[2]}</span></div></div><button class="vote ${s[5]?'on':''}" onclick="vote(${songs.indexOf(s)})">▲ ${s[3]}</button></div>`).join('');$('#qn').textContent=songs.length+10}
+function vote(i){const s=songs[i];s[5]=!s[5];s[3]+=s[5]?1:-1;if(s[3]>=15)toast('15+ votes — priority bump!');renderQ()}
+function addSong(){const n=extra.shift();if(!n){toast('Queue is full for the demo');return}songs.push(n);renderQ();toast('"'+n[0]+'" added to queue')}
+renderQ();
+// chat
+function sendMsg(){const v=$('#cin').value.trim();if(!v)return;$('#newmsgs').insertAdjacentHTML('beforeend',`<div class="me-m"><span class="bub">${v.replace(/</g,'&lt;')}</span><div class="s" style="margin-top:4px">Now • Delivered</div></div>`);$('#cin').value='';const c=$('#chatscroll');c.scrollTo(0,c.scrollHeight)}
+function burst(e){for(let i=0;i<5;i++){const f=document.createElement('div');f.className='float';f.textContent=e;f.style.left=(30+Math.random()*280)+'px';f.style.animationDelay=(i*.1)+'s';$('#phone').appendChild(f);setTimeout(()=>f.remove(),2200)}}
+go('home');
+</script></body></html>
